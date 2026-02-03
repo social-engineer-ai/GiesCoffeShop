@@ -10,7 +10,7 @@ Use this in EC2 User Data when launching:
 #!/bin/bash
 dnf install -y git
 cd /home/ec2-user
-git clone https://github.com/akumar261089/gies-coffee-shop.git
+git clone https://github.com/social-engineer-ai/GiesCoffeShop.git
 cd gies-coffee-shop
 chmod +x start.sh
 ./start.sh

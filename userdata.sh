@@ -5,8 +5,8 @@ set -x
 
 dnf install -y git
 cd /home/ec2-user
-git clone https://github.com/akumar261089/gies-coffee-shop.git
-cd gies-coffee-shop
+git clone https://github.com/social-engineer-ai/GiesCoffeShop.git
+cd GiesCoffeShop
 chmod +x start.sh
 ./start.sh
 
