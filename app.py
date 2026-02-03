@@ -1,22 +1,34 @@
 import streamlit as st
 import pymysql
 import pandas as pd
+import os
+import datetime
+import random
+
+# --- Database Configuration ---
+# Use environment variable DB_HOST for local testing, defaults to localhost for EC2
+DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_USER = 'admin'
+DB_PASSWORD = 'GiesCoffee2026!'
+DB_NAME = 'gies_coffee_shop'
 
 # --- Database Connection ---
 def get_connection():
     return pymysql.connect(
-        host='localhost',
-        user='admin',
-        password='GiesCoffee2026!',
-        database='gies_coffee_shop',
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
         cursorclass=pymysql.cursors.DictCursor
     )
 
 def run_query(query, params=None):
     conn = get_connection()
     try:
-        df = pd.read_sql(query, conn, params=params)
-        return df
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+            result = cursor.fetchall()
+        return pd.DataFrame(result)
     finally:
         conn.close()
 
@@ -128,12 +140,29 @@ elif page == "🛒 Place Order":
         submitted = st.form_submit_button("☕ Place Order")
 
         if submitted and name:
+            # Get product details
+            product_row = menu[menu['product_name'] == product].iloc[0]
+            price = float(product_row['price'])
+            category = product_row['category']
+            total = price * quantity
+
+            # Insert into customer_orders
             run_insert(
                 "INSERT INTO customer_orders (customer_name, product_name, quantity) VALUES (%s, %s, %s)",
                 (name, product, quantity)
             )
-            price = float(menu[menu['product_name'] == product]['price'].values[0])
-            st.success(f"Order placed! {quantity}x {product} for {name} - Total: ${price * quantity:.2f}")
+
+            # Also insert into daily_sales so dashboard updates
+            today = datetime.date.today().isoformat()
+            tx_id = f"W{random.randint(1000,9999)}"  # W for Web order
+            run_insert(
+                """INSERT INTO daily_sales
+                   (transaction_id, sale_date, product_name, category, quantity, unit_price, total_amount, payment_method, customer_type)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (tx_id, today, product, category, quantity, price, total, 'Web App', 'Web Order')
+            )
+
+            st.success(f"Order placed! {quantity}x {product} for {name} - Total: ${total:.2f}")
             st.balloons()
         elif submitted:
             st.warning("Please enter your name!")
