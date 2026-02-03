@@ -54,10 +54,10 @@ if page == "🏠 Dashboard":
     avg_order = run_query("SELECT AVG(total_amount) as avg_amt FROM daily_sales")
     menu_count = run_query("SELECT COUNT(*) as cnt FROM menu_items WHERE available = TRUE")
 
-    col1.metric("Total Revenue", f"${total_rev['rev'][0]:,.2f}")
-    col2.metric("Total Transactions", f"{total_tx['cnt'][0]}")
-    col3.metric("Avg Transaction", f"${avg_order['avg_amt'][0]:,.2f}")
-    col4.metric("Menu Items", f"{menu_count['cnt'][0]}")
+    col1.metric("Total Revenue", f"${float(total_rev['rev'][0]):,.2f}")
+    col2.metric("Total Transactions", f"{int(total_tx['cnt'][0])}")
+    col3.metric("Avg Transaction", f"${float(avg_order['avg_amt'][0]):,.2f}")
+    col4.metric("Menu Items", f"{int(menu_count['cnt'][0])}")
 
     st.markdown("---")
     st.markdown("### 💡 How This Works")
@@ -83,7 +83,7 @@ elif page == "📋 Menu":
         for i, (_, item) in enumerate(cat_items.iterrows()):
             with cols[i % 3]:
                 status = "✅" if item['available'] else "❌"
-                st.markdown(f"**{item['product_name']}** - ${item['price']:.2f} {status}")
+                st.markdown(f"**{item['product_name']}** - ${float(item['price']):.2f} {status}")
 
 # --- Sales Analytics ---
 elif page == "📊 Sales Analytics":
@@ -91,6 +91,7 @@ elif page == "📊 Sales Analytics":
 
     st.subheader("Daily Revenue")
     daily = run_query("SELECT sale_date, SUM(total_amount) as revenue, COUNT(*) as transactions FROM daily_sales GROUP BY sale_date ORDER BY sale_date")
+    daily['revenue'] = daily['revenue'].astype(float)
     st.bar_chart(daily.set_index('sale_date')['revenue'])
 
     col1, col2 = st.columns(2)
@@ -131,7 +132,7 @@ elif page == "🛒 Place Order":
                 "INSERT INTO customer_orders (customer_name, product_name, quantity) VALUES (%s, %s, %s)",
                 (name, product, quantity)
             )
-            price = menu[menu['product_name'] == product]['price'].values[0]
+            price = float(menu[menu['product_name'] == product]['price'].values[0])
             st.success(f"Order placed! {quantity}x {product} for {name} - Total: ${price * quantity:.2f}")
             st.balloons()
         elif submitted:
@@ -153,7 +154,7 @@ elif page == "📝 Recent Orders":
 
     if len(orders) > 0:
         st.dataframe(orders, use_container_width=True)
-        total = orders['total'].sum()
+        total = float(orders['total'].sum())
         st.metric("Total from Recent Orders", f"${total:,.2f}")
     else:
         st.info("No orders yet! Go to 'Place Order' to add one.")
