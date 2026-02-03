@@ -22,10 +22,10 @@ sudo systemctl restart mariadb
 echo "Loading database..."
 sudo mysql < setup.sql
 
-# Install Python packages system-wide
+# Install Python packages with --ignore-installed to avoid rpm conflicts
 echo "Installing Python packages..."
 sudo dnf install -y python3-pip
-sudo pip3 install streamlit pymysql pandas
+sudo pip3 install --ignore-installed streamlit pymysql pandas
 
 # Verify installation
 echo "Verifying streamlit installation..."
