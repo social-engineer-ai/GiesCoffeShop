@@ -1,8 +1,7 @@
 #!/bin/bash
 # Gies Coffee Shop - Setup & Start Script
-# Run this after cloning the repo on EC2
+set -ex
 
-set -e
 echo "=== Gies Coffee Shop Setup ==="
 
 # Install MariaDB
@@ -23,19 +22,27 @@ sudo systemctl restart mariadb
 echo "Loading database..."
 sudo mysql < setup.sql
 
-# Install Python packages
+# Install Python packages system-wide
 echo "Installing Python packages..."
 sudo dnf install -y python3-pip
-pip3 install -r requirements.txt
+sudo pip3 install streamlit pymysql pandas
+
+# Verify installation
+echo "Verifying streamlit installation..."
+which streamlit
+streamlit --version
 
 # Start Streamlit
 echo "Starting Streamlit..."
-nohup $(which streamlit) run app.py \
+cd /home/ec2-user/GiesCoffeShop
+nohup streamlit run app.py \
     --server.port 8501 \
     --server.address 0.0.0.0 \
     --server.headless true \
     --browser.gatherUsageStats false \
-    > ~/streamlit.log 2>&1 &
+    > /home/ec2-user/streamlit.log 2>&1 &
 
+sleep 2
+echo "Streamlit PID: $(pgrep -f streamlit)"
 echo "=== Setup Complete ==="
 echo "Web App: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8501"
